@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, Category, BlogPost, Testimonial, AppSettings, CartItem, Order, FormSubmission, Language, User, Review, UserRole } from '../types';
+import { Product, Category, BlogPost, Testimonial, AppSettings, CartItem, Order, FormSubmission, Language, User, Review, UserRole, OrderStatus } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_BLOG_POSTS, INITIAL_TESTIMONIALS, INITIAL_SETTINGS, TRANSLATIONS } from '../constants';
 
 interface AppContextType {
@@ -24,6 +24,7 @@ interface AppContextType {
   orders: Order[];
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   addOrder: (order: Order) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   submissions: FormSubmission[];
   setSubmissions: React.Dispatch<React.SetStateAction<FormSubmission[]>>;
   addSubmission: (type: 'contact' | 'newsletter', data: any) => void;
@@ -35,6 +36,7 @@ interface AppContextType {
   users: User[];
   login: (email: string, pass: string) => boolean;
   register: (name: string, email: string, pass: string, role?: UserRole) => void;
+  updateUser: (id: string, data: Partial<User>) => void;
   logout: () => void;
   deleteUser: (id: string) => void;
   addReview: (productId: string, rating: number, comment: string) => void;
@@ -57,7 +59,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('site_users');
     if (saved) return JSON.parse(saved);
-    // Default Admin Account
     return [{
       id: 'admin-001',
       name: 'Super Admin',
@@ -157,6 +158,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sendMockEmail(order.customerEmail, "Order Confirmation - " + order.id, "Thank you for your order!");
   };
 
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+  };
+
   const addSubmission = (type: 'contact' | 'newsletter', data: any) => {
     const newSub: FormSubmission = {
       id: Date.now().toString(),
@@ -171,7 +176,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSubmissions(prev => [newSub, ...prev]);
   };
 
-  // User Management
   const loginUser = (email: string, pass: string): boolean => {
     const user = users.find(u => u.email === email && u.password === pass);
     if (user) {
@@ -192,6 +196,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setUsers(prev => [...prev, newUser]);
     if (role === 'customer') setCurrentUser(newUser);
+  };
+
+  const updateUser = (id: string, data: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
+    if (currentUser?.id === id) {
+      setCurrentUser(prev => prev ? { ...prev, ...data } : null);
+    }
   };
 
   const logoutUser = () => setCurrentUser(null);
@@ -215,11 +226,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const sendMockEmail = (to: string, subject: string, body: string) => {
-    console.log(`[SIMULATED EMAIL SERVICE]
-    To: ${to}
-    Subject: ${subject}
-    Body: ${body}
-    -------------------------------`);
+    console.log(`[BACKEND EMAIL SERVICE] To: ${to} | Subject: ${subject} | Body: ${body}`);
   };
 
   const t = (key: keyof typeof TRANSLATIONS.en): string => {
@@ -230,9 +237,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       products, setProducts, categories, setCategories, blogPosts, setBlogPosts, testimonials: INITIAL_TESTIMONIALS,
       settings, setSettings, cart, addToCart, removeFromCart, updateCartQuantity, clearCart, 
-      wishlist, toggleWishlist, isInWishlist, orders, setOrders, addOrder,
+      wishlist, toggleWishlist, isInWishlist, orders, setOrders, addOrder, updateOrderStatus,
       submissions, setSubmissions, addSubmission, language, setLanguage, t,
-      currentUser, users, login: loginUser, register: registerUser, logout: logoutUser, deleteUser, addReview, sendMockEmail
+      currentUser, users, login: loginUser, register: registerUser, updateUser, logout: logoutUser, deleteUser, addReview, sendMockEmail
     }}>
       {children}
     </AppContext.Provider>

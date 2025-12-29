@@ -1,0 +1,7 @@
+{
+  "name": " backtest Brightify BD - Premium Home Decoration",
+  "description": "A high-end ecommerce platform for home decoration, featuring a full CMS, admin dashboard, and modern storefront.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

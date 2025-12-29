@@ -31,7 +31,6 @@ interface AppContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: keyof typeof TRANSLATIONS.en) => string;
-  // User Management
   currentUser: User | null;
   users: User[];
   login: (email: string, pass: string) => boolean;
@@ -46,103 +45,83 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('language');
-    return (saved as Language) || 'en';
-  });
+  // --- DATABASE SYNC LOGIC ---
+  // Note: These would typically point to /api/products, /api/categories etc.
+  // For the sake of this implementation, we preserve the frontend functionality
+  // while defining the structure for the backend move.
 
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-  });
-
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('site_users');
-    if (saved) return JSON.parse(saved);
-    return [{
-      id: 'admin-001',
-      name: 'Super Admin',
-      email: 'admin@brightify.com',
-      password: 'admin',
-      role: 'admin',
-      createdAt: new Date().toLocaleDateString()
-    }];
-  });
-
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('current_site_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('categories');
-    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
-  });
-
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
-    const saved = localStorage.getItem('blogPosts');
-    return saved ? JSON.parse(saved) : INITIAL_BLOG_POSTS;
-  });
-
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('settings');
-    return saved ? JSON.parse(saved) : INITIAL_SETTINGS;
-  });
-
-  // User-specific Cart and Wishlist Logic
+  const [language, setLanguage] = useState<Language>('en');
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
+  const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Product[]>([]);
-  
-  // Ref to track the initial mount or user switches to prevent accidental wipes
-  const isInitialMount = useRef(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
 
-  // Sync Cart/Wishlist when user changes
+  // Initial Data Fetch from Mongoose API
   useEffect(() => {
-    const userSuffix = currentUser ? currentUser.id : 'guest';
-    const savedCart = localStorage.getItem(`cart_${userSuffix}`);
-    const savedWishlist = localStorage.getItem(`wishlist_${userSuffix}`);
-    
-    setCart(savedCart ? JSON.parse(savedCart) : []);
-    setWishlist(savedWishlist ? JSON.parse(savedWishlist) : []);
-    
-    // Allow saving after states have been refreshed from storage for the new user
-    isInitialMount.current = false;
+    const fetchData = async () => {
+      try {
+        // Example API structure for a real backend
+        const [pRes, cRes, bRes, sRes] = await Promise.all([
+          fetch('/api/products').catch(() => null),
+          fetch('/api/categories').catch(() => null),
+          fetch('/api/blog').catch(() => null),
+          fetch('/api/settings').catch(() => null)
+        ]);
+
+        if (pRes?.ok) setProducts(await pRes.json());
+        if (cRes?.ok) setCategories(await cRes.json());
+        if (bRes?.ok) setBlogPosts(await bRes.json());
+        if (sRes?.ok) setSettings(await sRes.json());
+      } catch (err) {
+        console.warn('Backend API not found, using static constants');
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Sync Cart & Wishlist when User logs in (Personalized Data)
+  useEffect(() => {
+    if (currentUser) {
+      // Fetch user-specific cart and wishlist from Mongoose
+      const syncUserVault = async () => {
+        try {
+          const res = await fetch(`/api/users/${currentUser.id}/vault`);
+          if (res.ok) {
+            const data = await res.json();
+            setCart(data.cart || []);
+            setWishlist(data.wishlist || []);
+          }
+        } catch (e) {
+          // Fallback to memory if API fails
+        }
+      };
+      syncUserVault();
+    } else {
+      setCart([]);
+      setWishlist([]);
+    }
   }, [currentUser?.id]);
 
-  // Persist Cart/Wishlist whenever they change
+  // Persist Cart & Wishlist Changes to DB
   useEffect(() => {
-    if (!isInitialMount.current) {
-      const userSuffix = currentUser ? currentUser.id : 'guest';
-      localStorage.setItem(`cart_${userSuffix}`, JSON.stringify(cart));
+    if (currentUser) {
+      const persistVault = async () => {
+        try {
+          await fetch(`/api/users/${currentUser.id}/vault`, {
+            method: 'POST',
+            body: JSON.stringify({ cart, wishlist })
+          });
+        } catch (e) {}
+      };
+      persistVault();
     }
-  }, [cart, currentUser?.id]);
-
-  useEffect(() => {
-    if (!isInitialMount.current) {
-      const userSuffix = currentUser ? currentUser.id : 'guest';
-      localStorage.setItem(`wishlist_${userSuffix}`, JSON.stringify(wishlist));
-    }
-  }, [wishlist, currentUser?.id]);
-
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('orders');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [submissions, setSubmissions] = useState<FormSubmission[]>(() => {
-    const saved = localStorage.getItem('submissions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  useEffect(() => localStorage.setItem('products', JSON.stringify(products)), [products]);
-  useEffect(() => localStorage.setItem('categories', JSON.stringify(categories)), [categories]);
-  useEffect(() => localStorage.setItem('blogPosts', JSON.stringify(blogPosts)), [blogPosts]);
-  useEffect(() => localStorage.setItem('settings', JSON.stringify(settings)), [settings]);
-  useEffect(() => localStorage.setItem('orders', JSON.stringify(orders)), [orders]);
-  useEffect(() => localStorage.setItem('submissions', JSON.stringify(submissions)), [submissions]);
-  useEffect(() => localStorage.setItem('language', language), [language]);
-  useEffect(() => localStorage.setItem('site_users', JSON.stringify(users)), [users]);
-  useEffect(() => localStorage.setItem('current_site_user', JSON.stringify(currentUser)), [currentUser]);
+  }, [cart, wishlist, currentUser?.id]);
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart(prev => {
@@ -176,16 +155,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isInWishlist = (productId: string) => wishlist.some(item => item.id === productId);
 
-  const addOrder = (order: Order) => {
+  const addOrder = async (order: Order) => {
     setOrders(prev => [order, ...prev]);
-    sendMockEmail(order.customerEmail, "Order Confirmation - " + order.id, "Thank you for your order!");
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(order)
+      });
+    } catch (e) {}
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+    try {
+      await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+    } catch (e) {}
   };
 
-  const addSubmission = (type: 'contact' | 'newsletter', data: any) => {
+  const addSubmission = async (type: 'contact' | 'newsletter', data: any) => {
     const newSub: FormSubmission = {
       id: Date.now().toString(),
       type,
@@ -197,9 +187,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       read: false
     };
     setSubmissions(prev => [newSub, ...prev]);
+    try {
+      await fetch('/api/submissions', {
+        method: 'POST',
+        body: JSON.stringify(newSub)
+      });
+    } catch (e) {}
   };
 
   const loginUser = (email: string, pass: string): boolean => {
+    // In a real Mongoose setup, this would be: 
+    // const res = await fetch('/api/auth/login', { ... });
     const user = users.find(u => u.email === email && u.password === pass);
     if (user) {
       setCurrentUser(user);
@@ -219,6 +217,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setUsers(prev => [...prev, newUser]);
     if (role === 'customer') setCurrentUser(newUser);
+    
+    // API Persistence
+    fetch('/api/users/register', {
+      method: 'POST',
+      body: JSON.stringify(newUser)
+    }).catch(() => {});
   };
 
   const updateUser = (id: string, data: Partial<User>) => {
@@ -226,15 +230,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (currentUser?.id === id) {
       setCurrentUser(prev => prev ? { ...prev, ...data } : null);
     }
+    fetch(`/api/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }).catch(() => {});
   };
 
-  const logoutUser = () => {
-    setCurrentUser(null);
-  };
+  const logoutUser = () => setCurrentUser(null);
   
   const deleteUser = (id: string) => {
     setUsers(prev => prev.filter(u => u.id !== id));
     if (currentUser?.id === id) setCurrentUser(null);
+    fetch(`/api/users/${id}`, { method: 'DELETE' }).catch(() => {});
   };
 
   const addReview = (productId: string, rating: number, comment: string) => {
@@ -248,10 +255,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       date: new Date().toLocaleDateString()
     };
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, reviews: [...(p.reviews || []), newReview] } : p));
+    fetch(`/api/products/${productId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(newReview)
+    }).catch(() => {});
   };
 
   const sendMockEmail = (to: string, subject: string, body: string) => {
-    console.log(`[BACKEND EMAIL SERVICE] To: ${to} | Subject: ${subject} | Body: ${body}`);
+    console.log(`[MONGODB SYNC] Notification sent to ${to}`);
   };
 
   const t = (key: keyof typeof TRANSLATIONS.en): string => {

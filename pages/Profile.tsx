@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, Package, CheckCircle, Loader2, Save, ShoppingBag, Clock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Package, CheckCircle, Loader2, Save, ShoppingBag, Clock, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 
 export const Profile: React.FC = () => {
@@ -134,45 +134,57 @@ export const Profile: React.FC = () => {
             </div>
 
             {customerOrders.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-10">
                 {customerOrders.map(order => (
-                  <div key={order.id} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:shadow-lg transition-all group">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div key={order.id} className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 hover:bg-white hover:shadow-xl transition-all group overflow-hidden">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-slate-200/50">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-violet-50 transition-colors">
-                          <Package className="text-slate-400 group-hover:text-violet-600" size={20} />
+                        <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:bg-violet-50 transition-colors">
+                          <Package className="text-slate-400 group-hover:text-violet-600" size={24} />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id}</p>
-                          <p className="font-bold text-slate-900">৳{order.total}</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">ORDER ID: {order.id}</p>
+                          <p className="text-2xl font-black text-slate-900">৳{order.total}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 w-full md:w-auto justify-between">
-                         <div className="text-right hidden md:block">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</p>
-                            <p className="text-xs font-bold text-slate-700">{order.date}</p>
+                      <div className="flex items-center gap-8 w-full md:w-auto justify-between">
+                         <div className="text-right">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Date Placed</p>
+                            <p className="text-sm font-bold text-slate-700">{order.date}</p>
                          </div>
-                         <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                           order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 
-                           order.status === 'pending' ? 'bg-amber-100 text-amber-700' : 
-                           order.status === 'cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+                         <div className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                           order.status === 'delivered' ? 'bg-emerald-500 text-white' : 
+                           order.status === 'pending' ? 'bg-amber-400 text-white' : 
+                           order.status === 'cancelled' ? 'bg-rose-500 text-white' : 'bg-blue-500 text-white'
                          }`}>
                            {order.status}
                          </div>
                       </div>
                     </div>
                     
-                    <div className="mt-6 flex flex-wrap gap-2">
-                       {order.items.slice(0, 3).map((item, idx) => (
-                         <div key={idx} className="w-10 h-10 rounded-lg overflow-hidden border border-white shadow-sm">
-                           <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
-                         </div>
-                       ))}
-                       {order.items.length > 3 && (
-                         <div className="w-10 h-10 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                           +{order.items.length - 3}
-                         </div>
-                       )}
+                    {/* Detailed Product List for this Order */}
+                    <div className="mt-8 space-y-4">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Items in this Order</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {order.items.map((item, idx) => (
+                          <Link 
+                            key={`${order.id}-${idx}`}
+                            to={`/product/${item.slug}`}
+                            className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200 hover:border-violet-400 hover:shadow-lg transition-all group/item"
+                          >
+                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
+                               <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover transition-transform group-hover/item:scale-110" />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                               <h5 className="font-bold text-sm text-slate-800 line-clamp-1 group-hover/item:text-violet-600 transition-colors">{item.name}</h5>
+                               <p className="text-xs text-slate-500 mt-1">
+                                 {item.quantity} x ৳{item.salePrice || item.price}
+                               </p>
+                            </div>
+                            <ChevronRight size={16} className="text-slate-300 group-hover/item:text-violet-600 transition-colors" />
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
-/* Added Phone and MapPin to the lucide-react imports */
+/* Added Facebook and Globe to the lucide-react imports */
 import { 
   LayoutDashboard, ShoppingBag, Settings, Edit, Trash2, Plus, 
   CheckCircle, Package, Lock, LogOut, Eye, EyeOff, Users, 
   UserPlus, ExternalLink, X, Image as ImageIcon, Sparkles, Hash,
   Mail, Key, ShieldAlert, Loader2, BookOpen, FileText, Tags, Wallet, Menu,
-  Video, MessageSquare, ChevronDown, Printer, Phone, MapPin
+  Video, MessageSquare, ChevronDown, Printer, Phone, MapPin, Facebook, Globe
 } from 'lucide-react';
 import { Product, BlogPost, Category, User, Order, FormSubmission, OrderStatus } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
@@ -333,10 +333,30 @@ export const Admin: React.FC = () => {
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
-              <StatCard title="Local Revenue" value={`৳${orders.reduce((sum, o) => sum + o.total, 0)}`} color="bg-emerald-50 text-emerald-600" />
-              <StatCard title="Orders Placed" value={orders.length} color="bg-blue-50 text-blue-600" />
-              <StatCard title="User Database" value={users.length} color="bg-violet-50 text-violet-600" />
-              <StatCard title="Messages" value={submissions.length} color="bg-amber-50 text-amber-600" />
+              <StatCard 
+                title="Local Revenue" 
+                value={`৳${orders.reduce((sum, o) => sum + o.total, 0)}`} 
+                color="bg-emerald-50 text-emerald-600" 
+                onClick={() => setActiveTab('orders')}
+              />
+              <StatCard 
+                title="Orders Placed" 
+                value={orders.length} 
+                color="bg-blue-50 text-blue-600" 
+                onClick={() => setActiveTab('orders')}
+              />
+              <StatCard 
+                title="User Database" 
+                value={users.length} 
+                color="bg-violet-50 text-violet-600" 
+                onClick={() => setActiveTab('users')}
+              />
+              <StatCard 
+                title="Messages" 
+                value={submissions.length} 
+                color="bg-amber-50 text-amber-600" 
+                onClick={() => setActiveTab('messages')}
+              />
             </div>
           )}
 
@@ -646,6 +666,63 @@ export const Admin: React.FC = () => {
                    </form>
                 </div>
 
+                {/* Public Contact Details Card */}
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                   <h3 className="text-xl font-bold mb-8 flex items-center gap-2 text-slate-800">
+                     <Globe className="text-blue-600" size={24} /> Store Contact & Social Presence
+                   </h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                      <div>
+                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Public Helpline Number</label>
+                         <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                            <input 
+                               className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm font-mono" 
+                               value={settings.phoneNumber} 
+                               onChange={e => setSettings({...settings, phoneNumber: e.target.value})} 
+                               placeholder="+880 1XXX XXXXXX"
+                            />
+                         </div>
+                      </div>
+                      <div>
+                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Public Contact Email</label>
+                         <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                            <input 
+                               className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm" 
+                               value={settings.contactEmail} 
+                               onChange={e => setSettings({...settings, contactEmail: e.target.value})} 
+                               placeholder="info@brightifybd.com"
+                            />
+                         </div>
+                      </div>
+                      <div className="md:col-span-2">
+                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Store Office Address</label>
+                         <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                            <input 
+                               className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm" 
+                               value={settings.address} 
+                               onChange={e => setSettings({...settings, address: e.target.value})} 
+                               placeholder="Gulshan-2, Dhaka"
+                            />
+                         </div>
+                      </div>
+                      <div className="md:col-span-2">
+                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Official Facebook URL</label>
+                         <div className="relative">
+                            <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                            <input 
+                               className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm font-mono" 
+                               value={settings.facebookUrl} 
+                               onChange={e => setSettings({...settings, facebookUrl: e.target.value})} 
+                               placeholder="https://facebook.com/BrightifyBD"
+                            />
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                    <h3 className="text-xl font-bold mb-8 flex items-center gap-2 text-slate-800">
                      <Sparkles className="text-violet-600" size={24} /> Branding & System Identity
@@ -837,7 +914,7 @@ export const Admin: React.FC = () => {
                       <input type="number" className="w-full p-3 bg-slate-50 rounded-xl font-mono" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: Number(e.target.value)})} />
                    </div>
                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sale Price</label>
+                      <label className="text-[10px) font-bold text-slate-400 uppercase tracking-widest">Sale Price</label>
                       <input type="number" className="w-full p-3 bg-slate-50 rounded-xl font-mono" value={productFormData.salePrice || ''} onChange={e => setProductFormData({...productFormData, salePrice: e.target.value ? Number(e.target.value) : undefined})} />
                    </div>
                    <div className="space-y-1">
@@ -962,10 +1039,13 @@ export const Admin: React.FC = () => {
   );
 };
 
-const StatCard: React.FC<{ title: string; value: string | number; color: string }> = ({ title, value, color }) => (
-  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-b-4 border-b-violet-500/10">
-    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{title}</p>
+const StatCard: React.FC<{ title: string; value: string | number; color: string; onClick?: () => void }> = ({ title, value, color, onClick }) => (
+  <button 
+    onClick={onClick}
+    className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-b-4 border-b-violet-500/10 text-left transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] group cursor-pointer"
+  >
+    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1 group-hover:text-violet-500 transition-colors">{title}</p>
     <p className={`text-2xl font-bold ${color.split(' ')[1]}`}>{value}</p>
     <div className={`mt-4 h-1 w-12 rounded-full ${color.split(' ')[0]}`} />
-  </div>
+  </button>
 );

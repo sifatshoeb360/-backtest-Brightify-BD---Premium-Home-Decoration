@@ -11,6 +11,7 @@ import { Wishlist } from './pages/Wishlist';
 import { Contact } from './pages/Contact';
 import { Login } from './pages/Login';
 import { ProductDetail } from './pages/ProductDetail';
+import { Profile } from './pages/Profile';
 import { ScrollToTop } from './components/ScrollToTop';
 import { BookOpen, Calendar, User, ArrowLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -210,6 +211,7 @@ const AppContent: React.FC = () => {
             <Route path="/wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
             <Route path="/contact" element={<AnimatedPage><Contact /></AnimatedPage>} />
             <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
+            <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
             <Route path="/about" element={<About />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPostDetail />} />

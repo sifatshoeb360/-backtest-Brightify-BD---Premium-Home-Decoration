@@ -119,12 +119,17 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              {/* User / Login */}
+              {/* User / Login / Profile */}
               {currentUser ? (
-                <button onClick={() => logout()} className="p-2 text-slate-500 hover:text-rose-500 transition-colors group flex items-center gap-2">
-                  <User size={20} />
-                  <span className="hidden lg:block text-xs font-bold text-slate-700">{currentUser.name.split(' ')[0]}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link to="/profile" className="p-2 text-slate-500 hover:text-violet-600 transition-colors group flex items-center gap-2">
+                    <User size={20} />
+                    <span className="hidden lg:block text-xs font-bold text-slate-700">{currentUser.name.split(' ')[0]}</span>
+                  </Link>
+                  <button onClick={() => logout()} className="p-2 text-slate-400 hover:text-rose-500 transition-colors" title="Logout">
+                    <LogOut size={18} />
+                  </button>
+                </div>
               ) : (
                 <Link to="/login" className="p-2 text-slate-500 hover:text-violet-600 transition-colors">
                   <User size={20} />
@@ -180,13 +185,24 @@ export const Navbar: React.FC = () => {
                       {link.name}
                     </Link>
                   ))}
-                  <Link
-                    to="/admin"
-                    className="text-lg font-bold text-slate-400 flex items-center gap-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <ShieldCheck size={20} /> {t('adminPortal')}
-                  </Link>
+                  {currentUser?.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className="text-lg font-bold text-slate-400 flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <ShieldCheck size={20} /> {t('adminPortal')}
+                    </Link>
+                  )}
+                  {currentUser && (
+                    <Link
+                      to="/profile"
+                      className="text-lg font-bold text-slate-600 flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User size={20} /> My Profile
+                    </Link>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-4 pt-6 border-t border-slate-50">

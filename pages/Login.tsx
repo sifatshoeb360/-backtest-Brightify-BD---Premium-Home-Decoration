@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, ArrowLeft, CheckCircle, ShieldAlert, Loader2, ChevronRight } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, CheckCircle, ShieldAlert, Loader2, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 
 export const Login: React.FC = () => {
@@ -10,6 +10,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   // Recovery states
   const [isRecovering, setIsRecovering] = useState(false);
@@ -111,12 +112,19 @@ export const Login: React.FC = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input 
                     required 
-                    type="password" 
-                    className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/20 text-sm" 
+                    type={showPassword ? "text" : "password"} 
+                    className="w-full pl-12 pr-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/20 text-sm" 
                     placeholder="••••••••" 
                     value={password} 
                     onChange={e => setPassword(e.target.value)} 
                   />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
 
@@ -128,7 +136,7 @@ export const Login: React.FC = () => {
             </form>
 
             <div className="mt-8 text-center">
-              <button onClick={() => { setView(view === 'login' ? 'signup' : 'login'); setError(''); }} className="text-sm font-medium text-slate-500 hover:text-violet-600 transition-colors">
+              <button onClick={() => { setView(view === 'login' ? 'signup' : 'login'); setError(''); setShowPassword(false); }} className="text-sm font-medium text-slate-500 hover:text-violet-600 transition-colors">
                 {view === 'login' 
                   ? <>{t('noAccount')} <span className="font-bold text-violet-600">{t('signup')}</span></> 
                   : <>{t('alreadyAccount')} <span className="font-bold text-violet-600">{t('login')}</span></>}

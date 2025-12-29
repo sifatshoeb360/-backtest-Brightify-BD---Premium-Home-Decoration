@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Product, Category, BlogPost, Testimonial, AppSettings, CartItem, Order, FormSubmission, Language, User, Review, UserRole, OrderStatus } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_BLOG_POSTS, INITIAL_TESTIMONIALS, INITIAL_SETTINGS, TRANSLATIONS } from '../constants';
 
@@ -89,15 +89,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_SETTINGS;
   });
 
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // User-specific Cart and Wishlist Logic
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<Product[]>([]);
+  
+  // Ref to track the initial mount or user switches to prevent accidental wipes
+  const isInitialMount = useRef(true);
 
-  const [wishlist, setWishlist] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Sync Cart/Wishlist when user changes
+  useEffect(() => {
+    const userSuffix = currentUser ? currentUser.id : 'guest';
+    const savedCart = localStorage.getItem(`cart_${userSuffix}`);
+    const savedWishlist = localStorage.getItem(`wishlist_${userSuffix}`);
+    
+    setCart(savedCart ? JSON.parse(savedCart) : []);
+    setWishlist(savedWishlist ? JSON.parse(savedWishlist) : []);
+    
+    // Allow saving after states have been refreshed from storage for the new user
+    isInitialMount.current = false;
+  }, [currentUser?.id]);
+
+  // Persist Cart/Wishlist whenever they change
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      const userSuffix = currentUser ? currentUser.id : 'guest';
+      localStorage.setItem(`cart_${userSuffix}`, JSON.stringify(cart));
+    }
+  }, [cart, currentUser?.id]);
+
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      const userSuffix = currentUser ? currentUser.id : 'guest';
+      localStorage.setItem(`wishlist_${userSuffix}`, JSON.stringify(wishlist));
+    }
+  }, [wishlist, currentUser?.id]);
 
   const [orders, setOrders] = useState<Order[]>(() => {
     const saved = localStorage.getItem('orders');
@@ -113,8 +138,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => localStorage.setItem('categories', JSON.stringify(categories)), [categories]);
   useEffect(() => localStorage.setItem('blogPosts', JSON.stringify(blogPosts)), [blogPosts]);
   useEffect(() => localStorage.setItem('settings', JSON.stringify(settings)), [settings]);
-  useEffect(() => localStorage.setItem('cart', JSON.stringify(cart)), [cart]);
-  useEffect(() => localStorage.setItem('wishlist', JSON.stringify(wishlist)), [wishlist]);
   useEffect(() => localStorage.setItem('orders', JSON.stringify(orders)), [orders]);
   useEffect(() => localStorage.setItem('submissions', JSON.stringify(submissions)), [submissions]);
   useEffect(() => localStorage.setItem('language', language), [language]);
@@ -205,7 +228,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const logoutUser = () => setCurrentUser(null);
+  const logoutUser = () => {
+    setCurrentUser(null);
+  };
   
   const deleteUser = (id: string) => {
     setUsers(prev => prev.filter(u => u.id !== id));

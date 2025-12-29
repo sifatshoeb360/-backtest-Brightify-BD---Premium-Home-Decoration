@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, Package, CheckCircle, Loader2, Save, ShoppingBag, Clock } from 'lucide-react';
+import { User, Mail, Lock, Package, CheckCircle, Loader2, Save, ShoppingBag, Clock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 
 export const Profile: React.FC = () => {
   const { currentUser, orders, updateUser, t } = useApp();
   const [isUpdating, setIsUpdating] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -86,11 +87,18 @@ export const Profile: React.FC = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                   <input 
                     required 
-                    type="password" 
-                    className="w-full pl-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm font-mono" 
+                    type={showPassword ? "text" : "password"} 
+                    className="w-full pl-12 pr-12 p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/10 text-sm font-mono" 
                     value={formData.password}
                     onChange={e => setFormData({...formData, password: e.target.value})}
                   />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
 
